@@ -1,88 +1,95 @@
-# 시각화를 위한 라이브_러리들을 불러옵니다.
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pandas as pd # 이전 단계에서 사용했지만, 코드의 독립성을 위해 다시 포함합니다.
+import pandas as pd
+import os # 주석: 폴더를 만들거나 경로를 다루기 위해 'os' 라이브러리를 불러옵니다.
 
 # --------------------------------------------------------------------------
-# 0. 이전 단계: 데이터 불러오기 (경로는 사용자님 환경에 맞게 확인해주세요)
+# 0. 경로 설정 및 데이터 불러오기 (개선된 방식)
 # --------------------------------------------------------------------------
-file_path = r'C:\Users\shin\machineLearning\data\01_raw\WA_Fn-UseC_-Telco-Customer-Churn.csv'
-df = pd.read_csv(file_path)
+
+# 주석: [개선점 1] 상대 경로 사용
+# 이 코드를 프로젝트 최상위 폴더('customer-churn-prediction')에서 실행하면,
+# 아래 경로는 항상 올바르게 동작합니다.
+file_path = 'data/01_raw/WA_Fn-UseC_-Telco-Customer-Churn.csv'
+
+# 주석: [개선점 2] 그래프를 저장할 폴더 경로를 변수로 만듭니다.
+# reports/figures 폴더는 처음에 제안해주신 구조에 있던 폴더입니다.
+save_dir = 'reports/figures'
+
+# 주석: 저장할 폴더가 없으면 자동으로 생성합니다. exist_ok=True는 폴더가 이미 있어도 오류를 내지 않습니다.
+os.makedirs(save_dir, exist_ok=True)
+
+try:
+    df = pd.read_csv(file_path)
+    print(f"✅ 데이터 로드 성공: {file_path}")
+except FileNotFoundError:
+    print(f"❌ 파일 경로를 찾을 수 없습니다: {file_path}")
+    print("스크립트를 프로젝트 최상위 폴더에서 실행했는지 확인해주세요.")
+    # 파일이 없으면 더 이상 진행할 수 없으므로 스크립트를 중단합니다.
+    exit()
 
 
-# --------------------------------------------------------------------------
-# 1. 데이터 정제 (Cleaning): TotalCharges 컬럼을 숫자로 바꾸기
-# --------------------------------------------------------------------------
-# TotalCharges 컬럼을 숫자로 변환합니다. 변환이 불가능한 값(예: 공백)은 NaN(결측치)으로 만듭니다.
+# 데이터 정제
 df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
-
-# TotalCharges에 결측치가 있는지 확인합니다.
-print(f"--- [TotalCharges 컬럼 결측치 개수] ---\n{df['TotalCharges'].isnull().sum()}개")
-
-# 결측치가 있다면, 전체 데이터의 중간값(median)으로 채워넣습니다.
-# 평균보다 중간값을 사용하는 것이 극단적인 값의 영향을 덜 받아 안정적입니다.
-if df['TotalCharges'].isnull().sum() > 0:
-    median_val = df['TotalCharges'].median()
-    df['TotalCharges'].fillna(median_val, inplace=True)
-    print("결측치를 중간값으로 채웠습니다.")
+df['TotalCharges'].fillna(df['TotalCharges'].median(), inplace=True)
 
 
 # --------------------------------------------------------------------------
-# 2. 데이터 시각화: 고객 이탈 현황 파악하기
+# 2. 데이터 시각화 (그래프 분리 및 파일 저장)
 # --------------------------------------------------------------------------
-# 그래프 스타일과 폰트 크기를 설정합니다.
 sns.set(style="whitegrid")
-plt.figure(figsize=(12, 18)) # 전체 그림의 크기를 설정합니다.
 
-# (1) 고객 이탈 비율 (Churn)
-plt.subplot(3, 2, 1) # 3행 2열의 첫 번째 위치에 그래프를 그립니다.
+# 각 그래프에 대한 파일 이름을 미리 정의합니다.
+plot_filenames = {
+    "churn_distribution": "01_churn_distribution.png",
+    "churn_by_contract": "02_churn_by_contract.png",
+    "churn_by_internet_service": "03_churn_by_internet_service.png",
+    "churn_by_payment_method": "04_churn_by_payment_method.png",
+    "monthly_charges_dist": "05_monthly_charges_dist.png",
+    "tenure_dist": "06_tenure_dist.png"
+}
+
+def save_and_show_plot(fig_name):
+    """그래프를 파일로 저장하고 화면에 보여주는 함수"""
+    file_save_path = os.path.join(save_dir, fig_name)
+    plt.savefig(file_save_path, dpi=300, bbox_inches='tight') # bbox_inches='tight'는 잘림 방지
+    print(f"✅ 그래프 저장 완료: {file_save_path}")
+    plt.show()
+
+# (1) Churn Distribution -> 이탈 분포 : yes는 이탈한 고객, no는 유지한 고객 -> 데이터 불균형 확인
+plt.figure(figsize=(8, 5))
 sns.countplot(x='Churn', data=df)
-plt.title('Churn Distribution (Target)', fontsize=14)
-plt.xlabel('Churn (Yes: 이탈, No: 유지)')
-plt.ylabel('Number of Customers')
+plt.title('Churn Distribution (Target)', fontsize=15)
+save_and_show_plot(plot_filenames["churn_distribution"])
 
-
-# (2) 계약 유형(Contract)에 따른 이탈률
-plt.subplot(3, 2, 2)
+# (2) Churn by Contract Type -> 계약 유형별 이탈  -> 계약 기간이 짧을수록 고객이 서비스를 쉽게 해지
+plt.figure(figsize=(8, 5))
 sns.countplot(x='Contract', hue='Churn', data=df)
-plt.title('Churn by Contract Type', fontsize=14)
-plt.xlabel('Contract Type')
-plt.ylabel('Number of Customers')
+plt.title('Churn by Contract Type', fontsize=15)
+save_and_show_plot(plot_filenames["churn_by_contract"])
 
-
-# (3) 인터넷 서비스(InternetService)에 따른 이탈률
-plt.subplot(3, 2, 3)
+# (3) Churn by Internet Service -> 인터넷 서비스 종류별 이탈 -> 고객의 이탈률: 광랜 서비스 > DSL 이용 고객
+plt.figure(figsize=(8, 5))
 sns.countplot(x='InternetService', hue='Churn', data=df)
-plt.title('Churn by Internet Service', fontsize=14)
-plt.xlabel('Internet Service')
-plt.ylabel('Number of Customers')
+plt.title('Churn by Internet Service', fontsize=15)
+save_and_show_plot(plot_filenames["churn_by_internet_service"])
 
+# (4) Churn by Payment Method -> 결제 방법별 이탈 -> 전자 청구서를 사용하는 고객의 이탈률이 더 높음
+plt.figure(figsize=(10, 6))
+order = df['PaymentMethod'].value_counts().index
+sns.countplot(x='PaymentMethod', hue='Churn', data=df, order=order)
+plt.title('Churn by Payment Method', fontsize=15)
+plt.xticks(rotation=30, ha='right')
+save_and_show_plot(plot_filenames["churn_by_payment_method"])
 
-# (4) 요금 지불 방식(PaymentMethod)에 따른 이탈률
-plt.subplot(3, 2, 4)
-sns.countplot(x='PaymentMethod', hue='Churn', data=df, order = df['PaymentMethod'].value_counts().index)
-plt.title('Churn by Payment Method', fontsize=14)
-plt.xticks(rotation=15) # x축 라벨이 길어서 살짝 회전시킵니다.
-plt.xlabel('Payment Method')
-plt.ylabel('Number of Customers')
-
-
-# (5) 월 요금(MonthlyCharges) 분포
-plt.subplot(3, 2, 5)
+# (5) Distribution of Monthly Charges -> 월별 요금 분포 -> 월별 요금이 높은 고객이 이탈할 가능성이 더 높음
+plt.figure(figsize=(8, 5))
 sns.histplot(data=df, x='MonthlyCharges', hue='Churn', kde=True, multiple="stack")
-plt.title('Churn by Monthly Charges', fontsize=14)
-plt.xlabel('Monthly Charges')
-plt.ylabel('Number of Customers')
+plt.title('Distribution of Monthly Charges by Churn', fontsize=15)
+save_and_show_plot(plot_filenames["monthly_charges_dist"])
 
-
-# (6) 총 사용 기간(tenure) 분포
-plt.subplot(3, 2, 6)
+# (6) Distribution of Tenure -> 고객 유지 기간 분포 -> 서비스 사용 기간이 짧은 초기(0~10개월) 고객이 이탈할 가능성이 더 높음
+plt.figure(figsize=(8, 5))
 sns.histplot(data=df, x='tenure', hue='Churn', kde=True, multiple="stack")
-plt.title('Churn by Tenure', fontsize=14)
-plt.xlabel('Tenure (Months)')
-plt.ylabel('Number of Customers')
-
-
-# 그래프들이 서로 겹치지 않게 레이아웃을 조정하고 화면에 보여줍니다.
-plt.tight_layout()
-plt.show()
+plt.title('Distribution of Tenure by Churn', fontsize=15)
+save_and_show_plot(plot_filenames["tenure_dist"])
