@@ -4,6 +4,8 @@ from preprocessor import create_preprocessor_and_split_data
 from model_trainer import train_model
 from evaluator import evaluate_model
 
+from preprocessor import create_preprocessor_and_split_data
+
 # 이 코드를 실행하기 전에, 모든 .py 파일이 같은 폴더에 있는지,
 # 'WA_Fn-UseC_-Telco-Customer-Churn.csv' 파일도 같은 폴더에 있는지 확인해주세요.
 
