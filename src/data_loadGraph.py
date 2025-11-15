@@ -28,6 +28,26 @@ except FileNotFoundError:
     # 파일이 없으면 더 이상 진행할 수 없으므로 스크립트를 중단합니다.
     exit()
 
+# --------------------------------------------------------------------------
+# 1. 이탈 현황 수치 및 비율 계산
+# --------------------------------------------------------------------------
+
+# 이탈 여부('Churn')에 따른 고객 수를 계산합니다.
+churn_counts = df['Churn'].value_counts()
+
+# 이탈 여부('Churn')에 따른 고객 비율을 백분율로 계산합니다.
+churn_proportions = df['Churn'].value_counts(normalize=True) * 100
+
+# 계산된 결과를 보기 쉽게 출력합니다.
+print("\n--- 고객 이탈 현황 (정확한 수치 및 비율) ---")
+print("\n[이탈 여부별 고객 수]")
+print(f"유지 (No):  {churn_counts['No']} 명")
+print(f"이탈 (Yes): {churn_counts['Yes']} 명")
+
+print("\n[이탈 여부별 고객 비율]")
+print(f"유지 (No):  {churn_proportions['No']:.2f}%")
+print(f"이탈 (Yes): {churn_proportions['Yes']:.2f}%")
+print("----------------------------------------\n")
 
 # 데이터 정제
 df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
