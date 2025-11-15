@@ -12,7 +12,7 @@
 - **링크**: [https://www.kaggle.com/datasets/blastchar/telco-customer-churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
 - **획득 방식**: `kagglehub` API를 사용하여 코드로 다운로드
 
-## 3. MVP 개발 워크플로우 (나의 작업 흐름)
+## 3. MVP 개발 워크플로우 (작업 흐름)
 
 이 프로젝트는 아래의 5단계 순서로 진행합니다. 각 단계는 독립된 노트북 파일에서 실험하고, 최종적으로는 전체 프로세스가 연결되도록 구성합니다.
 
@@ -22,16 +22,15 @@
 - **수행 작업**:
     1.  Git 저장소를 로컬에 `clone` 합니다.
     2.  `requirements.txt` 파일에 필요한 라이브러리(`pandas`, `scikit-learn`, `matplotlib`, `seaborn`, `kagglehub` 등)를 명시하고, 가상환경에 설치합니다. (`pip install -r requirements.txt`)
-    3.  Kaggle API Key (`kaggle.json`)를 설정하여 데이터셋을 다운로드할 준비를 마칩니다.
+    3. data/01_raw 아래에 있는 파일은 Kaggle에서 다운 받은 원본 데이터입니다.
 
 ### 1단계: 데이터 로딩 및 기본 탐색 (Data Loading & Basic Exploration)
 
 - **목표**: 데이터를 성공적으로 불러와 구조와 기본 정보를 파악합니다.
 - **위치**: `notebooks/01_data_exploration.ipynb`
 - **수행 작업**:
-    1.  `kagglehub` API를 호출하여 데이터셋의 로컬 경로를 가져옵니다.
-    2.  `pandas`를 사용해 CSV 파일을 데이터프레임으로 불러옵니다.
-    3.  `.info()`, `.head()`, `.describe()`, `.isnull().sum()` 등을 통해 데이터의 전체적인 구조, 타입, 결측치 여부 등을 확인합니다.
+    1.  `pandas`를 사용해 CSV 파일을 데이터프레임으로 불러옵니다.
+    2.  `.info()`, `.head()`, `.describe()`, `.isnull().sum()` 등을 통해 데이터의 전체적인 구조, 타입, 결측치 여부 등을 확인합니다.
 
 ### 2단계: 데이터 탐색 및 시각화 (EDA & Visualization)
 
