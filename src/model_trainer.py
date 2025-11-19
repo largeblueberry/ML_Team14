@@ -1,7 +1,5 @@
 # [변경점 1] imbalanced-learn의 Pipeline과 SMOTE를 import 합니다.
 from imblearn.pipeline import Pipeline
-from imblearn.over_sampling import SMOTE
-from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier  # RandomForest 대신 XGBoost를 가져옵니다
 
 def train_model(X_train, y_train, preprocessor):
@@ -28,7 +26,6 @@ def train_model(X_train, y_train, preprocessor):
         n_estimators=100,      # 부스팅 단계 수 (트리의 개수)
         learning_rate=0.1,     # 학습률
         max_depth=3,           # 트리의 최대 깊이 (과적합 방지)
-        scale_pos_weight=2.7,  # [핵심] 소수 클래스(이탈)에 가중치를 부여하여 재현율을 높입니다.
         random_state=42,
         n_jobs=-1
     )
@@ -37,8 +34,7 @@ def train_model(X_train, y_train, preprocessor):
     # 파이프라인은 각 단계를 순서대로 실행합니다.
     model_pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor),
-        ('smote', SMOTE(random_state=42)), # 전처리 후 SMOTE 적용
-        ('classifier', xgb_classifier)      # SMOTE 적용된 데이터로 모델 학습
+        ('classifier', xgb_classifier)
     ])
 
     # 모델 훈련 (파이프라인이 알아서 SMOTE를 훈련 데이터에만 적용합니다)
