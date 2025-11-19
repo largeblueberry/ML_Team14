@@ -2,10 +2,11 @@
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import SMOTE
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier  # RandomForest 대신 XGBoost를 가져옵니다
 
 def train_model(X_train, y_train, preprocessor):
     """
-    전처리, SMOTE 오버샘플링, 모델을 파이프라인으로 결합하여 훈련시킵니다.
+    전처리, SMOTE 오버샘플링, XGBoost 모델을 파이프라인으로 결합하여 훈련시킵니다.
     
     Args:
         X_train: 훈련용 피처 데이터
@@ -16,11 +17,18 @@ def train_model(X_train, y_train, preprocessor):
         imblearn.pipeline.Pipeline: 훈련된 모델 파이프라인
     """
     print("⏳ [model_trainer] SMOTE 포함 모델 훈련 시작...")
-    
-    # RandomForest 모델 정의
-    # [변경점 2] SMOTE로 데이터 불균형을 직접 해소하므로, class_weight='balanced' 옵션은 제거합니다.
-    rf_classifier = RandomForestClassifier(
-        n_estimators=100,
+
+    # [변경점 2] RandomForest 모델 대신 XGBoost 모델을 정의합니다.
+    # XGBoost는 불균형 데이터 처리에 매우 효과적인 파라미터들을 제공합니다.
+
+    # 이탈 고객(1)의 비율이 낮으므로, 'scale_pos_weight'로 가중치를 줍니다.
+    # (유지 고객 수 / 이탈 고객 수) 비율을 계산하여 적용하면 좋습니다. (대략 73/27 ≈ 2.7)
+
+    xgb_classifier = XGBClassifier(
+        n_estimators=100,      # 부스팅 단계 수 (트리의 개수)
+        learning_rate=0.1,     # 학습률
+        max_depth=3,           # 트리의 최대 깊이 (과적합 방지)
+        scale_pos_weight=2.7,  # [핵심] 소수 클래스(이탈)에 가중치를 부여하여 재현율을 높입니다.
         random_state=42,
         n_jobs=-1
     )
@@ -30,7 +38,7 @@ def train_model(X_train, y_train, preprocessor):
     model_pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor),
         ('smote', SMOTE(random_state=42)), # 전처리 후 SMOTE 적용
-        ('classifier', rf_classifier)      # SMOTE 적용된 데이터로 모델 학습
+        ('classifier', xgb_classifier)      # SMOTE 적용된 데이터로 모델 학습
     ])
 
     # 모델 훈련 (파이프라인이 알아서 SMOTE를 훈련 데이터에만 적용합니다)
